@@ -1,0 +1,6 @@
+# VENV AND ENV
+.env
+venv
+
+# PYCHARM
+.idea
