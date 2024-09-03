@@ -4,3 +4,6 @@ venv
 
 # PYCHARM
 .idea
+
+# PYCACHE
+*__pycache__*
