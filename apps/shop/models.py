@@ -64,3 +64,4 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     comment = models.CharField(max_length=2500, null=False, blank=True)
     post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True)
+    stars = models.IntegerField(null=True)
