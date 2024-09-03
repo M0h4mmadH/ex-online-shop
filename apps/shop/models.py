@@ -5,6 +5,7 @@ from apps.user.models import User
 
 class ProductCategory(models.Model):
     name = models.CharField(max_length=100, primary_key=True, null=False, blank=False)
+    is_active = models.BooleanField(default=True)
 
 
 class Product(models.Model):
@@ -14,6 +15,7 @@ class Product(models.Model):
     category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
 
 
 class Cart(models.Model):
@@ -26,21 +28,25 @@ class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     cart_status = models.CharField(max_length=1, choices=CART_STATUS, null=False, blank=False)
     created = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
 
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True)
+    is_active = models.BooleanField(default=True)
 
 
 class Order(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
 
 class City(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -50,6 +56,7 @@ class Address(models.Model):
     city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True)
     address = models.CharField(max_length=250, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{str(self.city)} - {self.address}"
@@ -58,6 +65,7 @@ class Address(models.Model):
 class Post(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     description = models.CharField(max_length=2500, null=False, blank=True)
+    is_active = models.BooleanField(default=True)
 
 
 class Comment(models.Model):
@@ -65,3 +73,4 @@ class Comment(models.Model):
     comment = models.CharField(max_length=2500, null=False, blank=True)
     post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True)
     stars = models.IntegerField(null=True)
+    is_active = models.BooleanField(default=True)
