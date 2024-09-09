@@ -72,19 +72,55 @@ class OutPurchaseOrders(serializers.ModelSerializer):
 
 
 class InAdminCreateProducts(serializers.ModelSerializer):
-    pass
+    category = serializers.CharField()
+
+    class Meta:
+        model = Product
+        fields = ['name', 'description', 'price', 'category', 'is_active']
+
+    @classmethod
+    def validate_category(cls, value):
+        try:
+            return ProductCategory.objects.get(name=value)
+        except ProductCategory.DoesNotExist:
+            raise serializers.ValidationError("Invalid category")
 
 
 class OutAdminCreateProducts(serializers.ModelSerializer):
-    pass
+    category = serializers.StringRelatedField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price', 'category', 'created', 'updated', 'is_active']
 
 
 class InAdminUpdateProducts(serializers.ModelSerializer):
-    pass
+    category = serializers.CharField(required=False)
+
+    class Meta:
+        model = Product
+        fields = ['name', 'description', 'price', 'category', 'is_active']
+        extra_kwargs = {
+            'name': {'required': False},
+            'description': {'required': False},
+            'price': {'required': False},
+            'is_active': {'required': False},
+        }
+
+    @classmethod
+    def validate_category(cls, value):
+        try:
+            return ProductCategory.objects.get(name=value)
+        except ProductCategory.DoesNotExist:
+            raise serializers.ValidationError("Invalid category")
 
 
 class OutAdminUpdateProducts(serializers.ModelSerializer):
-    pass
+    category = serializers.StringRelatedField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price', 'category', 'created', 'updated', 'is_active']
 
 
 class InSearchProducts(serializers.ModelSerializer):
