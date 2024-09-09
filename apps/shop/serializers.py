@@ -1,5 +1,51 @@
 from rest_framework import serializers
 
+from apps.shop.models import *
+
+
+class InGetProducts(serializers.Serializer):
+    search = serializers.CharField(required=False, allow_blank=True)
+    category = serializers.CharField(required=False, allow_blank=True)
+    min_price = serializers.IntegerField(required=False, min_value=0)
+    max_price = serializers.IntegerField(required=False, min_value=0)
+    order_by = serializers.ChoiceField(choices=['name', 'price', '-name', '-price'], required=False)
+
+
+class ProductCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = ['name']
+
+
+class OutGetProducts(serializers.ModelSerializer):
+    category = ProductCategorySerializer(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price', 'category', 'created', 'updated', 'is_active']
+
+
+class InGetCategories(serializers.Serializer):
+    search = serializers.CharField(required=False, allow_blank=True)
+    order_by = serializers.ChoiceField(choices=['name', '-name'], required=False)
+
+
+class OutGetCategories(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = ['name', 'is_active']
+
+
+class InGetCategories(serializers.Serializer):
+    search = serializers.CharField(required=False, allow_blank=True)
+    order_by = serializers.ChoiceField(choices=['name', '-name'], required=False)
+
+
+class OutGetCategories(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = ['name', 'is_active']
+
 
 class InGetUserOrders(serializers.ModelSerializer):
     pass
