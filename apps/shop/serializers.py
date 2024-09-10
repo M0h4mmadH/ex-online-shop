@@ -85,10 +85,11 @@ class OutAdminCreateProducts(serializers.ModelSerializer):
 
 class InAdminUpdateProducts(serializers.ModelSerializer):
     category = serializers.CharField(required=False)
+    id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'category', 'is_active']
+        fields = ['id', 'name', 'description', 'price', 'category', 'is_active']
         extra_kwargs = {
             'name': {'required': False},
             'description': {'required': False},

@@ -94,15 +94,11 @@ class AdminUpdateProducts(APIView):
     throttle_classes = [UserRateThrottle]
 
     def post(self, request):
-        product_id = request.data.get('id')
-        if not product_id:
-            return Response({"error": "Product ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = InAdminUpdateProducts(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            product = update_product(product_id, serializer.validated_data)
+            product = update_product(serializer.validated_data)
             out_serializer = OutAdminUpdateProducts(product)
             return Response(out_serializer.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:

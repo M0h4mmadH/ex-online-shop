@@ -45,8 +45,8 @@ def create_product(validated_data):
     return Product.objects.create(**validated_data)
 
 
-def update_product(product_id, validated_data):
-    product = Product.objects.get(id=product_id)
+def update_product(validated_data):
+    product = Product.objects.get(id=validated_data['id'])
     for attr, value in validated_data.items():
         setattr(product, attr, value)
     product.save()
