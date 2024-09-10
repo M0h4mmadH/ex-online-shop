@@ -33,18 +33,7 @@ class InGetCategories(serializers.Serializer):
 class OutGetCategories(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = ['name', 'is_active']
-
-
-class InGetCategories(serializers.Serializer):
-    search = serializers.CharField(required=False, allow_blank=True)
-    order_by = serializers.ChoiceField(choices=['name', '-name'], required=False)
-
-
-class OutGetCategories(serializers.ModelSerializer):
-    class Meta:
-        model = ProductCategory
-        fields = ['name', 'is_active']
+        fields = ['name']
 
 
 class InGetUserOrders(serializers.ModelSerializer):
@@ -113,6 +102,35 @@ class InAdminUpdateProducts(serializers.ModelSerializer):
             return ProductCategory.objects.get(name=value)
         except ProductCategory.DoesNotExist:
             raise serializers.ValidationError("Invalid category")
+
+
+class InAdminCreateCategory(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = ['name', 'is_active']
+
+
+class OutAdminCreateCategory(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = ['name', 'is_active']
+
+
+class InAdminUpdateCategory(serializers.ModelSerializer):
+    current_name = serializers.CharField(required=True)
+    new_name = serializers.CharField(required=False)
+    is_active = serializers.BooleanField(required=False)
+
+    @classmethod
+    def validate_new_name(cls, value):
+        if ProductCategory.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Category with this name already exists.")
+        return value
+
+    class Meta:
+        model = ProductCategory
+        fields = ['current_name', 'new_name', 'is_active']
+
 
 
 class OutAdminUpdateProducts(serializers.ModelSerializer):

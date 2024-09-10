@@ -53,5 +53,19 @@ def update_product(product_id, validated_data):
     return product
 
 
+def create_category(validated_data):
+    return ProductCategory.objects.create(**validated_data)
+
+
+def update_category(validated_data):
+    category = ProductCategory.objects.get(name=validated_data['current_name'])
+    if 'new_name' in validated_data:
+        category.name = validated_data['new_name']
+    if 'is_active' in validated_data:
+        category.is_active = validated_data['is_active']
+    category.save()
+    return category
+
+
 def generate_purchase_order_factor(order: Order):
     pass

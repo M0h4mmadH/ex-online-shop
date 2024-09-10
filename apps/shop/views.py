@@ -5,10 +5,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from .models import Product
-from .selectors import search_products, search_categories, update_product, create_product
+from .models import Product, ProductCategory
+from .selectors import search_products, search_categories, update_product, create_product, update_category, \
+    create_category
 from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGetCategories, InAdminUpdateProducts,
-                          OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts)
+                          OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts, InAdminUpdateCategory,
+                          OutAdminCreateCategory, InAdminCreateCategory)
 from ..utils.paginations import DefaultPagination
 
 
@@ -107,6 +109,40 @@ class AdminUpdateProducts(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminCreateCategory(APIView):
+    permission_classes = [IsAdminUser]
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request):
+        serializer = InAdminCreateCategory(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            category = create_category(serializer.validated_data)
+            out_serializer = OutAdminCreateCategory(category)
+            return Response(out_serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminUpdateCategory(APIView):
+    permission_classes = [IsAdminUser]
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request):
+        serializer = InAdminUpdateCategory(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            category = update_category(serializer.validated_data)
+            out_serializer = OutAdminCreateCategory(category)
+            return Response(out_serializer.data, status=status.HTTP_200_OK)
+        except ProductCategory.DoesNotExist:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class SearchProducts(APIView):
