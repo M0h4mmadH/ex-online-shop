@@ -5,13 +5,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from .models import Product, ProductCategory
+from .models import Product, ProductCategory, PurchaseReceipt
 from .selectors import (search_products, search_categories, update_product, create_product, update_category,
-                        create_category, process_add_items_to_cart)
+                        create_category, process_add_items_to_cart, get_user_purchase_receipts, get_user_open_carts)
 
 from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGetCategories, InAdminUpdateProducts,
                           OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts, InAdminUpdateCategory,
-                          OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem)
+                          OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
+                          InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer)
 
 from ..utils.paginations import DefaultPagination
 
@@ -60,14 +61,24 @@ class GetCategories(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class GetUserOrders(APIView):
+class GetUserPurchaseReceipts(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OutPurchaseReceiptSerializer
+
     def get(self, request):
-        pass
+        receipts = get_user_purchase_receipts(request.user)
+        output_serializer = self.serializer_class(receipts, many=True)
+        return Response(output_serializer.data)
 
 
-class GetUserCarts(APIView):
+class GetUserActiveCarts(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        pass
+        serializer = InGetUserCarts(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        carts = get_user_open_carts(request.user, **serializer.validated_data)
+        return Response(OutGetUserCarts(carts, many=True).data)
 
 
 class PurchaseOrders(APIView):

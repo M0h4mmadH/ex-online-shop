@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from apps.user.models import User
-from .models import ProductCategory, Product, Cart, CartItem
+from .models import ProductCategory, Product, Cart, CartItem, PurchaseReceipt, Order, ReceiptOrder
 
 
 class ShopAPITestCase(TestCase):
@@ -14,6 +14,12 @@ class ShopAPITestCase(TestCase):
         self.category = ProductCategory.objects.create(name='Electronics')
         self.product = Product.objects.create(name='Laptop', description='A good laptop', price=1000,
                                               category=self.category)
+
+        Cart.objects.create(user=self.regular_user, cart_status='O')
+        self.order = Order.objects.create(product=self.product, user=self.regular_user, price=95)
+        self.receipt = PurchaseReceipt.objects.create(user=self.regular_user, price=95)
+        ReceiptOrder.objects.create(order=self.order, user=self.regular_user, receipt=self.receipt)
+
 
     def test_admin_create_product(self):
         self.client.force_authenticate(user=self.admin_user)
@@ -95,3 +101,17 @@ class ShopAPITestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)
+        
+    def test_get_user_purchase(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user get purchase')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_get_user_carts(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user get carts')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)

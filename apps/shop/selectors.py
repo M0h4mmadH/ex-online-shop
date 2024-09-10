@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.db.models import Q
 
-from apps.shop.models import (Product, Order, ProductCategory, Cart, CartItem)
+from apps.shop.models import (Product, ProductCategory, Cart, CartItem, PurchaseReceipt)
 
 
 def search_products(validated_data):
@@ -101,5 +101,9 @@ def process_add_items_to_cart(user, items_data):
     return cart, cart_items
 
 
-def generate_purchase_order_factor(order: Order):
-    pass
+def get_user_purchase_receipts(user, **filters):
+    return PurchaseReceipt.objects.filter(user=user)
+
+
+def get_user_open_carts(user, **filters):
+    return Cart.objects.filter(user=user, cart_status='O')

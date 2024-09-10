@@ -36,20 +36,36 @@ class OutGetCategories(serializers.ModelSerializer):
         fields = ['name']
 
 
-class InGetUserOrders(serializers.ModelSerializer):
-    pass
+class OutGetProductsForOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price']
 
 
-class OutGetUserOrders(serializers.ModelSerializer):
-    pass
+class OutOrderSerializer(serializers.ModelSerializer):
+    product = OutGetProductsForOrderSerializer(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'price', 'product', 'discount']
 
 
-class InGetUserCarts(serializers.ModelSerializer):
-    pass
+class OutPurchaseReceiptSerializer(serializers.ModelSerializer):
+    items = OutOrderSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PurchaseReceipt
+        fields = ['items', 'price', 'user']
+
+
+class InGetUserCarts(serializers.Serializer):
+    status = serializers.ChoiceField(choices=Cart.CART_STATUS, required=False)
 
 
 class OutGetUserCarts(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = Cart
+        fields = ['id', 'created', 'cart_status', 'products']
 
 
 class InPurchaseOrders(serializers.ModelSerializer):
