@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from .models import Product, ProductCategory, PurchaseReceipt
+from .models import Product, ProductCategory
 from .selectors import (search_products, search_categories, update_product, create_product, update_category,
                         create_category, process_add_items_to_cart, get_user_purchase_receipts, get_user_open_carts)
 
@@ -92,8 +92,7 @@ class AdminCreateProducts(APIView):
 
     def post(self, request):
         serializer = InAdminCreateProducts(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         try:
             product = create_product(serializer.validated_data)
             out_serializer = OutAdminCreateProducts(product)
@@ -108,8 +107,7 @@ class AdminUpdateProducts(APIView):
 
     def post(self, request):
         serializer = InAdminUpdateProducts(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         try:
             product = update_product(serializer.validated_data)
             out_serializer = OutAdminUpdateProducts(product)
@@ -126,8 +124,7 @@ class AdminCreateCategory(APIView):
 
     def post(self, request):
         serializer = InAdminCreateCategory(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         try:
             category = create_category(serializer.validated_data)
             out_serializer = OutAdminCreateCategory(category)
@@ -142,8 +139,7 @@ class AdminUpdateCategory(APIView):
 
     def post(self, request):
         serializer = InAdminUpdateCategory(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         try:
             category = update_category(serializer.validated_data)
             out_serializer = OutAdminCreateCategory(category)
@@ -170,8 +166,7 @@ class UserAddItemsToCart(APIView):
 
     def post(self, request):
         serializer = InUserAddItemsToCart(data=request.data, many=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         try:
             cart, cart_items = process_add_items_to_cart(request.user, serializer.validated_data)
             cart_serializer = OutUserCart(cart)
