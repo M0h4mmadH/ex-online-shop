@@ -1,6 +1,7 @@
+from django.db import transaction
 from django.db.models import Q
 
-from apps.shop.models import (Product, Order, ProductCategory)
+from apps.shop.models import (Product, Order, ProductCategory, Cart, CartItem)
 
 
 def search_products(validated_data):
@@ -65,6 +66,39 @@ def update_category(validated_data):
         category.is_active = validated_data['is_active']
     category.save()
     return category
+
+
+def get_or_create_active_cart(user):
+    cart, created = Cart.objects.get_or_create(
+        user=user,
+        cart_status='O',
+        is_active=True,
+        defaults={'cart_status': 'O'}
+    )
+    return cart
+
+
+def add_item_to_cart(cart, product_id, quantity):
+    product = Product.objects.get(id=product_id)
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        defaults={'quantity': quantity}
+    )
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.save()
+    return cart_item
+
+
+@transaction.atomic
+def process_add_items_to_cart(user, items_data):
+    cart = get_or_create_active_cart(user)
+    cart_items = []
+    for item_data in items_data:
+        cart_item = add_item_to_cart(cart, item_data['product_id'], item_data['quantity'])
+        cart_items.append(cart_item)
+    return cart, cart_items
 
 
 def generate_purchase_order_factor(order: Order):

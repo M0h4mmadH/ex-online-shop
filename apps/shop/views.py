@@ -1,16 +1,18 @@
 from rest_framework import status
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 from .models import Product, ProductCategory
-from .selectors import search_products, search_categories, update_product, create_product, update_category, \
-    create_category
+from .selectors import (search_products, search_categories, update_product, create_product, update_category,
+                        create_category, process_add_items_to_cart)
+
 from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGetCategories, InAdminUpdateProducts,
                           OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts, InAdminUpdateCategory,
-                          OutAdminCreateCategory, InAdminCreateCategory)
+                          OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem)
+
 from ..utils.paginations import DefaultPagination
 
 
@@ -63,7 +65,7 @@ class GetUserOrders(APIView):
         pass
 
 
-class GetUserCards(APIView):
+class GetUserCarts(APIView):
     def get(self, request):
         pass
 
@@ -104,7 +106,7 @@ class AdminUpdateProducts(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminCreateCategory(APIView):
@@ -141,12 +143,7 @@ class AdminUpdateCategory(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class SearchProducts(APIView):
-    def get(self, request):
-        pass
-
-
-class CommentProducts(APIView):
+class UserCommentProducts(APIView):
     def post(self, request):
         pass
 
@@ -156,9 +153,26 @@ class UserAddAddress(APIView):
         pass
 
 
-class UserAddItemsToCard(APIView):
+class UserAddItemsToCart(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def post(self, request):
-        pass
+        serializer = InUserAddItemsToCart(data=request.data, many=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            cart, cart_items = process_add_items_to_cart(request.user, serializer.validated_data)
+            cart_serializer = OutUserCart(cart)
+            items_serializer = OutCartItem(cart_items, many=True)
+            return Response({
+                'cart': cart_serializer.data,
+                'items': items_serializer.data
+            }, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDeleteAddress(APIView):

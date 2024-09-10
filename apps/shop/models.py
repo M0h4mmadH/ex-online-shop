@@ -4,7 +4,7 @@ from apps.user.models import User
 
 
 class ProductCategory(models.Model):
-    name = models.CharField(max_length=100, primary_key=True, null=False, blank=False)
+    name = models.CharField(max_length=100, unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
 
 
@@ -33,7 +33,8 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True)
+    cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True)  # todo: set null or protected ... ?
+    quantity = models.IntegerField(default=1)
     is_active = models.BooleanField(default=True)
 
 

@@ -44,11 +44,11 @@ class OutGetUserOrders(serializers.ModelSerializer):
     pass
 
 
-class InGetUserCards(serializers.ModelSerializer):
+class InGetUserCarts(serializers.ModelSerializer):
     pass
 
 
-class OutGetUserCards(serializers.ModelSerializer):
+class OutGetUserCarts(serializers.ModelSerializer):
     pass
 
 
@@ -133,7 +133,6 @@ class InAdminUpdateCategory(serializers.ModelSerializer):
         fields = ['current_name', 'new_name', 'is_active']
 
 
-
 class OutAdminUpdateProducts(serializers.ModelSerializer):
     category = serializers.StringRelatedField()
 
@@ -166,12 +165,24 @@ class OutUserAddAddress(serializers.ModelSerializer):
     pass
 
 
-class InUserAddItemsToCard(serializers.ModelSerializer):
-    pass
+class InUserAddItemsToCart(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1, default=1)
 
 
-class OutUserAddItemsToCard(serializers.ModelSerializer):
-    pass
+class OutUserCart(serializers.ModelSerializer):
+    class Meta:
+        model = Cart
+        fields = ['id', 'cart_status', 'created']
+
+
+class OutCartItem(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name')
+    product_price = serializers.IntegerField(source='product.price')
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product_name', 'product_price', 'quantity']
 
 
 class InUserDeleteAddress(serializers.ModelSerializer):
