@@ -9,6 +9,7 @@ def search_products(validated_data):
     category = validated_data.get('category', '')
     min_price = validated_data.get('min_price')
     max_price = validated_data.get('max_price')
+    city = validated_data.get('city')
     order_by = validated_data.get('order_by', 'name')
 
     queryset = Product.objects.filter(is_active=True)
@@ -24,6 +25,9 @@ def search_products(validated_data):
 
     if max_price is not None:
         queryset = queryset.filter(price__lte=max_price)
+
+    if city is not None:
+        queryset = queryset.filter(city__name__icontains=city)
 
     queryset = queryset.order_by(order_by)
     return queryset

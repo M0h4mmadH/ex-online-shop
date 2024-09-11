@@ -8,7 +8,8 @@ class InGetProducts(serializers.Serializer):
     category = serializers.CharField(required=False, allow_blank=True)
     min_price = serializers.IntegerField(required=False, min_value=0)
     max_price = serializers.IntegerField(required=False, min_value=0)
-    order_by = serializers.ChoiceField(choices=['name', 'price', '-name', '-price'], required=False)
+    city = serializers.CharField(required=False, allow_blank=True)
+    order_by = serializers.ChoiceField(choices=['name', 'price', '-name', '-price', 'city', '-city'], required=False)
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -17,12 +18,19 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         fields = ['name']
 
 
+class ProductCitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = ['name']
+
+
 class OutGetProducts(serializers.ModelSerializer):
     category = ProductCategorySerializer(read_only=True)
+    city = ProductCitySerializer(read_only=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'category', 'created', 'updated', 'is_active']
+        fields = ['id', 'name', 'description', 'price', 'category', 'created', 'updated', 'is_active', 'city']
 
 
 class InGetCategories(serializers.Serializer):

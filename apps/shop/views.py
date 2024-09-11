@@ -144,6 +144,11 @@ class UserAddAddress(APIView):
         pass
 
 
+class UserDeleteAddress(APIView):
+    def post(self, request):
+        pass
+
+
 class UserAddItemsToCart(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
@@ -163,6 +168,4 @@ class UserAddItemsToCart(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserDeleteAddress(APIView):
-    def post(self, request):
-        pass
+
