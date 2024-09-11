@@ -26,10 +26,7 @@ class GetProducts(APIView):
         input_serializer = InGetProducts(data=request.query_params)
         input_serializer.is_valid(raise_exception=True)
 
-        try:
-            queryset = search_products(input_serializer.validated_data)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        queryset = search_products(input_serializer.validated_data)
 
         paginator = self.pagination_class()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
@@ -48,10 +45,7 @@ class GetCategories(APIView):
         input_serializer = InGetCategories(data=request.query_params)
         input_serializer.is_valid(raise_exception=True)
 
-        try:
-            queryset = search_categories(input_serializer.validated_data)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        queryset = search_categories(input_serializer.validated_data)
 
         paginator = self.pagination_class()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
@@ -93,12 +87,9 @@ class AdminCreateProducts(APIView):
     def post(self, request):
         serializer = InAdminCreateProducts(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            product = create_product(serializer.validated_data)
-            out_serializer = OutAdminCreateProducts(product)
-            return Response(out_serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:  # todo: make Exceptions more specific
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        product = create_product(serializer.validated_data)
+        out_serializer = OutAdminCreateProducts(product)
+        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AdminUpdateProducts(APIView):
@@ -114,8 +105,6 @@ class AdminUpdateProducts(APIView):
             return Response(out_serializer.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminCreateCategory(APIView):
@@ -125,12 +114,9 @@ class AdminCreateCategory(APIView):
     def post(self, request):
         serializer = InAdminCreateCategory(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            category = create_category(serializer.validated_data)
-            out_serializer = OutAdminCreateCategory(category)
-            return Response(out_serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        category = create_category(serializer.validated_data)
+        out_serializer = OutAdminCreateCategory(category)
+        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AdminUpdateCategory(APIView):
@@ -146,8 +132,6 @@ class AdminUpdateCategory(APIView):
             return Response(out_serializer.data, status=status.HTTP_200_OK)
         except ProductCategory.DoesNotExist:
             return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserCommentProducts(APIView):
@@ -177,8 +161,6 @@ class UserAddItemsToCart(APIView):
             }, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDeleteAddress(APIView):
