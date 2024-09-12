@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from apps.user.models import User
-from .models import ProductCategory, Product, Cart, CartItem, PurchaseReceipt, Order, ReceiptOrder
+from .models import ProductCategory, Product, Cart, CartItem, PurchaseReceipt, Order, ReceiptOrder, Comment
 
 
 class ShopAPITestCase(TestCase):
@@ -115,3 +115,27 @@ class ShopAPITestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+    def test_user_valid_comment_product(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user comment product')
+        comment = 'best product ever!'
+        data = {
+            'comment': comment,
+            'product_id': self.product.id,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Comment.objects.filter(comment=comment).count(), 1)
+
+    def test_user_invalid_comment_product(self):
+        self.client.force_authenticate(user=self.regular_user)
+        comment = 'invalid comment'
+        url = reverse('user comment product')
+        data = {
+            'comment': comment,
+            'product_id': self.product.id*3,
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Comment.objects.filter(comment=comment).count(), 0)

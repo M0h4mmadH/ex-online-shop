@@ -12,7 +12,9 @@ from .selectors import (search_products, search_categories, update_product, crea
 from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGetCategories, InAdminUpdateProducts,
                           OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts, InAdminUpdateCategory,
                           OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
-                          InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer)
+                          InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer, InUserCommentProducts,
+                          OutUserCommentProducts)
+from .services import create_user_comment
 
 from ..utils.paginations import DefaultPagination
 
@@ -135,8 +137,23 @@ class AdminUpdateCategory(APIView):
 
 
 class UserCommentProducts(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def post(self, request):
-        pass
+        input_serializer = InUserCommentProducts(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        try:
+            create_user_comment(user=request.user,
+                                post=None,
+                                comment=input_serializer.validated_data['comment'],
+                                product_id=input_serializer.validated_data['product_id'],
+                                )
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        output_serializer = OutUserCommentProducts(input_serializer.validated_data)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserAddAddress(APIView):
@@ -166,6 +183,3 @@ class UserAddItemsToCart(APIView):
             }, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
-

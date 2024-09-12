@@ -173,12 +173,26 @@ class OutSearchProducts(serializers.ModelSerializer):
     pass
 
 
-class InCommentProducts(serializers.ModelSerializer):
-    pass
+class InUserCommentProducts(serializers.ModelSerializer):
+    product_id = serializers.IntegerField()
+
+    class Meta:
+        model = Comment
+        fields = ['product_id', 'comment']
 
 
-class OutCommentProducts(serializers.ModelSerializer):
-    pass
+class OutUserCommentUserID(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id']
+
+
+class OutUserCommentProducts(serializers.ModelSerializer):
+    user_id = OutUserCommentUserID(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['user_id']
 
 
 class InUserAddAddress(serializers.ModelSerializer):

@@ -92,5 +92,13 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
     comment = models.CharField(max_length=2500, null=False, blank=True)
     post = models.ForeignKey(Post, on_delete=models.PROTECT, null=True)
-    stars = models.IntegerField(null=True)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True)
     is_active = models.BooleanField(default=True)
+
+
+class UserRateProduct(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True)
+    rate = models.IntegerField(null=False, blank=False)
+    is_active = models.BooleanField(default=True)
+
