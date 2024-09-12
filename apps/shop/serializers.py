@@ -195,6 +195,15 @@ class OutUserCommentProducts(serializers.ModelSerializer):
         fields = ['user_id']
 
 
+class InUserRateProduct(serializers.ModelSerializer):
+    product_id = serializers.IntegerField()
+    rate = serializers.IntegerField(min_value=0, max_value=5)
+
+    class Meta:
+        model = UserRateProduct
+        fields = ['product_id', 'rate']
+
+
 class InUserAddAddress(serializers.ModelSerializer):
     pass
 
@@ -206,6 +215,9 @@ class OutUserAddAddress(serializers.ModelSerializer):
 class InUserAddItemsToCart(serializers.Serializer):
     product_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1, default=1)
+
+    class Meta:
+        fields = ['product_id', 'quantity']
 
 
 class OutUserCart(serializers.ModelSerializer):

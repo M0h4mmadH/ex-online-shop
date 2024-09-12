@@ -11,6 +11,6 @@ urlpatterns = [
     path('cart/add-items/', UserAddItemsToCart.as_view(), name='user add items to cart'),
     path('user/get-purchases/', GetUserPurchaseReceipts.as_view(), name='user get purchase'),
     path('user/get-active-carts/', GetUserActiveCarts.as_view(), name='user get carts'),
-    path('user/comment/', UserCommentProducts.as_view(), name='user comment product'),
-
+    path('product/comment/', UserCommentProducts.as_view(), name='user comment product'),
+    path('product/rate', UserRateProducts.as_view(), name='user rate product'),
 ]

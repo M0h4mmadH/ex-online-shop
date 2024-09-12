@@ -3,7 +3,8 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from apps.user.models import User
-from .models import ProductCategory, Product, Cart, CartItem, PurchaseReceipt, Order, ReceiptOrder, Comment
+from .models import (ProductCategory, Product, Cart, CartItem, PurchaseReceipt, Order, ReceiptOrder, Comment,
+                     UserRateProduct)
 
 
 class ShopAPITestCase(TestCase):
@@ -19,7 +20,6 @@ class ShopAPITestCase(TestCase):
         self.order = Order.objects.create(product=self.product, user=self.regular_user, price=95)
         self.receipt = PurchaseReceipt.objects.create(user=self.regular_user, price=95)
         ReceiptOrder.objects.create(order=self.order, user=self.regular_user, receipt=self.receipt)
-
 
     def test_admin_create_product(self):
         self.client.force_authenticate(user=self.admin_user)
@@ -101,7 +101,7 @@ class ShopAPITestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)
-        
+
     def test_get_user_purchase(self):
         self.client.force_authenticate(user=self.regular_user)
         url = reverse('user get purchase')
@@ -134,8 +134,55 @@ class ShopAPITestCase(TestCase):
         url = reverse('user comment product')
         data = {
             'comment': comment,
-            'product_id': self.product.id*3,
+            'product_id': self.product.id * 3,
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(Comment.objects.filter(comment=comment).count(), 0)
+
+    def test_user_valid_rate_product(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user rate product')
+        data = {
+            'product_id': self.product.id,
+            'rate': 5,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(UserRateProduct.objects.count(), 1)
+        UserRateProduct.objects.all().delete()
+
+    def test_user_invalid_rate_product(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user rate product')
+        data = {
+            'product_id': self.product.id,
+            'rate': 50,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(UserRateProduct.objects.count(), 0)
+        UserRateProduct.objects.all().delete()
+
+    def test_user_multiple_rate_product(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user rate product')
+        self.client.post(path=url, data={
+            'product_id': self.product.id,
+            'rate': 1,
+        }, format='json')
+        self.client.post(path=url, data={
+            'product_id': self.product.id,
+            'rate': 2,
+        }, format='json')
+        self.client.post(path=url, data={
+            'product_id': self.product.id,
+            'rate': 3,
+        }, format='json')
+        response = self.client.post(path=url, data={
+            'product_id': self.product.id,
+            'rate': 4,
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(UserRateProduct.objects.count(), 1)
+        UserRateProduct.objects.all().delete()

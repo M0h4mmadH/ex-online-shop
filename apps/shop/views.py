@@ -13,8 +13,8 @@ from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGet
                           OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts, InAdminUpdateCategory,
                           OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
                           InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer, InUserCommentProducts,
-                          OutUserCommentProducts)
-from .services import create_user_comment
+                          OutUserCommentProducts, InUserRateProduct)
+from .services import create_user_comment, create_or_update_user_product_rate
 
 from ..utils.paginations import DefaultPagination
 
@@ -154,6 +154,24 @@ class UserCommentProducts(APIView):
 
         output_serializer = OutUserCommentProducts(input_serializer.validated_data)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+class UserRateProducts(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request):
+        input_serializer = InUserRateProduct(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        try:
+            create_or_update_user_product_rate(user=request.user,
+                                               product_id=input_serializer.validated_data['product_id'],
+                                               rate=input_serializer.validated_data['rate'])
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class UserAddAddress(APIView):
