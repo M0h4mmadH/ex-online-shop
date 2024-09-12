@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from .models import Product, ProductCategory
+from .models import Product, ProductCategory, Address, City
 from .selectors import (search_products, search_categories, update_product, create_product, update_category,
                         create_category, process_add_items_to_cart, get_user_purchase_receipts, get_user_open_carts)
 
@@ -13,8 +13,11 @@ from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGet
                           OutAdminCreateProducts, InAdminCreateProducts, OutAdminUpdateProducts, InAdminUpdateCategory,
                           OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
                           InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer, InUserCommentProducts,
-                          OutUserCommentProducts, InUserRateProduct)
-from .services import create_user_comment, create_or_update_user_product_rate
+                          OutUserCommentProducts, InUserRateProduct, InUserAddAddress, InUserUpdateAddress,
+                          InUserDeleteAddress)
+
+from .services import (create_user_comment, create_or_update_user_product_rate, create_user_address,
+                       update_user_address, inactive_user_address)
 
 from ..utils.paginations import DefaultPagination
 
@@ -156,7 +159,6 @@ class UserCommentProducts(APIView):
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
 
-
 class UserRateProducts(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
@@ -175,13 +177,61 @@ class UserRateProducts(APIView):
 
 
 class UserAddAddress(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def post(self, request):
-        pass
+        input_serializer = InUserAddAddress(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        try:
+            address = create_user_address(user=request.user,
+                                          city=input_serializer.validated_data['city'],
+                                          address=input_serializer.validated_data['address'])
+        except City.DoesNotExist:
+            return Response({"error": "City not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(data={'id': address.id}, status=status.HTTP_201_CREATED)
+
+
+class UserUpdateAddress(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request):
+        input_serializer = InUserUpdateAddress(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        try:
+            address = update_user_address(user=request.user,
+                                          address_id=input_serializer.validated_data['address_id'],
+                                          new_city=input_serializer.validated_data.get('new_city'),
+                                          new_address=input_serializer.validated_data.get('new_address'))
+        except Address.DoesNotExist:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        except City.DoesNotExist:
+            return Response({"error": "City not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(data={'id': address.id}, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        return self.post(request)
 
 
 class UserDeleteAddress(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def post(self, request):
-        pass
+        input_serializer = InUserDeleteAddress(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        try:
+            inactive_user_address(user=request.user,
+                                  address_id=input_serializer.validated_data['address_id'])
+        except Address.DoesNotExist:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={"id": input_serializer.validated_data['address_id']}, status=status.HTTP_200_OK)
 
 
 class UserAddItemsToCart(APIView):

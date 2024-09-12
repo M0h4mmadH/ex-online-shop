@@ -4,7 +4,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from apps.user.models import User
 from .models import (ProductCategory, Product, Cart, CartItem, PurchaseReceipt, Order, ReceiptOrder, Comment,
-                     UserRateProduct)
+                     UserRateProduct, Address, City)
 
 
 class ShopAPITestCase(TestCase):
@@ -15,6 +15,8 @@ class ShopAPITestCase(TestCase):
         self.category = ProductCategory.objects.create(name='Electronics')
         self.product = Product.objects.create(name='Laptop', description='A good laptop', price=1000,
                                               category=self.category)
+        self.city = City.objects.create(name='Tehran')
+        self.city2 = City.objects.create(name='San Francisco')
 
         Cart.objects.create(user=self.regular_user, cart_status='O')
         self.order = Order.objects.create(product=self.product, user=self.regular_user, price=95)
@@ -150,7 +152,6 @@ class ShopAPITestCase(TestCase):
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(UserRateProduct.objects.count(), 1)
-        UserRateProduct.objects.all().delete()
 
     def test_user_invalid_rate_product(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -162,7 +163,6 @@ class ShopAPITestCase(TestCase):
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(UserRateProduct.objects.count(), 0)
-        UserRateProduct.objects.all().delete()
 
     def test_user_multiple_rate_product(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -185,4 +185,131 @@ class ShopAPITestCase(TestCase):
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(UserRateProduct.objects.count(), 1)
-        UserRateProduct.objects.all().delete()
+        self.assertEqual(UserRateProduct.objects.first().rate, 4)
+
+    def test_user_create_valid_address(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user create address')
+        address = 'javahad - fatemi - tehran - iran - earth'
+        data = {
+            'address': address,
+            'city': self.city.name
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Address.objects.count(), 1)
+        self.assertEqual(Address.objects.first().address, address)
+
+    def test_user_create_invalid_lengthy_address(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user create address')
+        address = 'javahad - fatemi - tehran - iran - earth',
+        data = {
+            'address': address * 20,
+            'city': self.city.name
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Address.objects.count(), 0)
+
+    def test_user_address_update_with_valid_address(self):
+        url = reverse('user create address')
+        self.client.force_authenticate(user=self.regular_user)
+        address = 'javahad - fatemi - tehran - iran - earth'
+        new_address = 'mars'
+        data = {
+            'address': address,
+            'city': self.city.name
+        }
+        response = self.client.post(path=url, data=data, format='json')
+
+        url = reverse('user update address')
+        address_id = response.data['id']
+        data = {
+            'address_id': address_id,
+            'new_address': new_address
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Address.objects.count(), 1)
+        self.assertEqual(Address.objects.first().address, new_address)
+
+    def test_user_address_update_valid_city(self):
+        url = reverse('user create address')
+        self.client.force_authenticate(user=self.regular_user)
+        address = 'javahad - fatemi - tehran - iran - earth'
+        data = {
+            'city': self.city.name,
+            'address': address
+        }
+        response = self.client.post(path=url, data=data, format='json')
+
+        url = reverse('user update address')
+        address_id = response.data['id']
+        data = {
+            'address_id': address_id,
+            'new_city': self.city2.name
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Address.objects.count(), 1)
+        self.assertEqual(Address.objects.first().city.name, self.city2.name)
+
+    def test_user_address_update_with_invalid_lengthy_address(self):
+        self.client.force_authenticate(user=self.regular_user)
+        address = 'javahad - fatemi - tehran - iran - earth'
+        url = reverse('user create address')
+        new_address = 'mars - ' * 50
+        data = {
+            'city': self.city.name,
+            'address': address,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+
+        address_id = response.data['id']
+        url = reverse('user update address')
+        data = {
+            'new_address': new_address,
+            'address_id': address_id,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_user_address_update_with_invalid_city(self):
+        url = reverse('user create address')
+        self.client.force_authenticate(user=self.regular_user)
+        address = 'javahad - fatemi - tehran - iran - earth'
+        data = {
+            'city': self.city.name,
+            'address': address
+        }
+        response = self.client.post(path=url, data=data, format='json')
+
+        url = reverse('user update address')
+        address_id = response.data['id']
+        data = {
+            'address_id': address_id,
+            'new_city': 'some unknown city name'
+        }
+
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_address_delete(self):
+        url = reverse('user create address')
+        self.client.force_authenticate(user=self.regular_user)
+        address = 'javahad - fatemi - tehran - iran - earth'
+        data = {
+            'city': self.city.name,
+            'address': address
+        }
+        response = self.client.post(path=url, data=data, format='json')
+
+        url = reverse('user delete address')
+        address_id = response.data['id']
+        data = {
+            'address_id': address_id,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Address.objects.filter(is_active=True).count(), 0)

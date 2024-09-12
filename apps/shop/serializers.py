@@ -204,20 +204,24 @@ class InUserRateProduct(serializers.ModelSerializer):
         fields = ['product_id', 'rate']
 
 
-class InUserAddAddress(serializers.ModelSerializer):
-    pass
+class InUserAddAddress(serializers.Serializer):
+    address = serializers.CharField(max_length=250, required=True)
+    city = serializers.CharField(max_length=50, required=True)
 
 
-class OutUserAddAddress(serializers.ModelSerializer):
-    pass
+class InUserUpdateAddress(serializers.Serializer):
+    address_id = serializers.IntegerField()
+    new_address = serializers.CharField(max_length=250, required=False)
+    new_city = serializers.CharField(max_length=50, required=False)
+
+
+class InUserDeleteAddress(serializers.Serializer):
+    address_id = serializers.IntegerField()
 
 
 class InUserAddItemsToCart(serializers.Serializer):
     product_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1, default=1)
-
-    class Meta:
-        fields = ['product_id', 'quantity']
 
 
 class OutUserCart(serializers.ModelSerializer):
@@ -233,11 +237,3 @@ class OutCartItem(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['id', 'product_name', 'product_price', 'quantity']
-
-
-class InUserDeleteAddress(serializers.ModelSerializer):
-    pass
-
-
-class OutUserDeleteAddress(serializers.ModelSerializer):
-    pass
