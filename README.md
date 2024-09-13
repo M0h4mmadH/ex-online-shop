@@ -61,6 +61,12 @@ The project uses token-based authentication. Include the token in the Authorizat
 ```
 Authorization: Token <your-token>
 ```
+## Run test
+The project use standard django TestCase class. To run tests:
+```
+python manage.py test apps.shop.tests 
+python manage.py test apps.user.tests 
+```
 
 ## Rate Limiting
 
