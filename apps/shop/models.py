@@ -3,13 +3,18 @@ from django.db import models
 from apps.user.models import User
 
 
+class ActiveManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class ProductCategory(models.Model):
     name = models.CharField(max_length=100, unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
 
 
 class City(models.Model):
-    name = models.CharField(max_length=50, null=False, blank=False)
+    name = models.CharField(max_length=50, null=False, blank=False, unique=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -78,6 +83,9 @@ class Address(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
     is_active = models.BooleanField(default=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
     def __str__(self):
         return f"{str(self.city)} - {self.address}"
 
@@ -101,4 +109,3 @@ class UserRateProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True)
     rate = models.IntegerField(null=False, blank=False)
     is_active = models.BooleanField(default=True)
-

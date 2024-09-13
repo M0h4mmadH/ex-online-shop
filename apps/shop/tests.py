@@ -313,3 +313,42 @@ class ShopAPITestCase(TestCase):
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Address.objects.filter(is_active=True).count(), 0)
+
+    def test_user_address_get_active_addresses(self):
+        # Add two addresses
+        url = reverse('user create address')
+        self.client.force_authenticate(user=self.regular_user)
+        active_address = 'some active address'
+        deleted_address = 'some inactive address'
+        data = {
+            'address': active_address,
+            'city': self.city.name,
+        }
+        self.client.post(path=url, data=data, format='json')
+        data = {
+            'address': deleted_address,
+            'city': self.city2.name,
+        }
+        response = self.client.post(path=url, data=data, format='json')
+
+        # Delete one address
+        url = reverse('user delete address')
+        address_id = response.data['id']
+        data = {
+            'address_id': address_id,
+        }
+        self.client.post(path=url, data=data, format='json')
+
+        # Get the user address list
+        url = reverse('user get address')
+        address_response = self.client.get(path=url)
+        db_active_address = Address.active.first()
+        response = address_response.data[0]
+
+        # Validate response
+        self.assertEqual(address_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Address.active.all().count(), 1)
+        self.assertEqual(response['id'], db_active_address.id)
+        self.assertEqual(response['address'], db_active_address.address)
+        self.assertEqual(response['city']['name'], db_active_address.city.name)
+

@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from .models import Product, ProductCategory, Address, City
+from .models import (Product, ProductCategory, Address, City)
 from .selectors import (search_products, search_categories, update_product, create_product, update_category,
                         create_category, process_add_items_to_cart, get_user_purchase_receipts, get_user_open_carts)
 
@@ -14,7 +14,7 @@ from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGet
                           OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
                           InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer, InUserCommentProducts,
                           OutUserCommentProducts, InUserRateProduct, InUserAddAddress, InUserUpdateAddress,
-                          InUserDeleteAddress)
+                          InUserDeleteAddress, OutUserGetAddress)
 
 from .services import (create_user_comment, create_or_update_user_product_rate, create_user_address,
                        update_user_address, inactive_user_address)
@@ -214,6 +214,17 @@ class UserUpdateAddress(APIView):
 
     def patch(self, request):
         return self.post(request)
+
+
+class UserGetAddress(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+    output_serializer = OutUserGetAddress
+
+    def get(self, request):
+        user_addresses = Address.active.filter(user=request.user)
+        output_data = self.output_serializer(user_addresses, many=True)
+        return Response(output_data.data, status=status.HTTP_200_OK)
 
 
 class UserDeleteAddress(APIView):

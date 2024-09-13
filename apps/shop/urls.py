@@ -16,4 +16,5 @@ urlpatterns = [
     path('user/address/create', UserAddAddress.as_view(), name='user create address'),
     path('user/address/update', UserUpdateAddress.as_view(), name='user update address'),
     path('user/address/delete', UserDeleteAddress.as_view(), name='user delete address'),
+    path('user/address/get', UserGetAddress.as_view(), name='user get address'),
 ]
