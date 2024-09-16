@@ -1,6 +1,6 @@
 from typing import Union
 
-from apps.shop.models import (Product, Post, Comment, UserRateProduct, Address, City)
+from apps.shop.models import (Product, Post, Comment, UserRateProduct, Address, City, Cart)
 from apps.user.models import User
 
 
@@ -42,3 +42,8 @@ def inactive_user_address(*, user: User, address_id: int):
     address.save()
     return address
 
+
+def delete_user_cart(*, user: User, cart_id: int):
+    cart = Cart.objects.get(user=user, id=cart_id)
+    cart.is_active = False
+    return cart.save()

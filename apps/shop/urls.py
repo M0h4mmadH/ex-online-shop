@@ -9,6 +9,7 @@ urlpatterns = [
     path('categories/create/', AdminCreateCategory.as_view(), name='admin create categories'),
     path('categories/update/', AdminUpdateCategory.as_view(), name='admin update categories'),
     path('cart/add-items/', UserAddItemsToCart.as_view(), name='user add items to cart'),
+    path('cart/delete/', UserDeleteCart.as_view(), name='user delete cart'),
     path('user/get-purchases/', GetUserPurchaseReceipts.as_view(), name='user get purchase'),
     path('user/get-active-carts/', GetUserActiveCarts.as_view(), name='user get carts'),
     path('product/comment/', UserCommentProducts.as_view(), name='user comment product'),

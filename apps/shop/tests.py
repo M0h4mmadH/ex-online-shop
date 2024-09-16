@@ -410,3 +410,32 @@ class ShopAPITestCase(TestCase):
         self.assertEqual(response['id'], db_active_address.id)
         self.assertEqual(response['address'], db_active_address.address)
         self.assertEqual(response['city']['name'], db_active_address.city.name)
+
+    def test_user_delete_cart(self):
+        # Create cart with an item
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user add items to cart')
+        data = [
+            {
+                'product_id': self.product.id,
+                'quantity': 2
+            }
+        ]
+        response = self.client.post(url, data, format='json')
+        cart_id = response.data['cart']['id']
+
+        # Delete cart
+        url = reverse('user delete cart')
+        response = self.client.post(path=url, data={'cart_id': cart_id}, format='json')
+
+        # Validate results
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Cart.active.count(), 0)
+
+    def test_user_delete_non_exsting_cart(self):
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user delete cart')
+        response = self.client.post(path=url, data={'cart_id': 10}, format='json')
+
+        # Validate results
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

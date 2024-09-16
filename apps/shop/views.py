@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
-from .models import (Product, ProductCategory, Address, City)
+from .models import (Product, ProductCategory, Address, City, Cart)
 from .selectors import (search_products, search_categories, update_product, create_product, update_category,
                         create_category, process_add_items_to_cart, get_user_purchase_receipts, get_user_open_carts)
 
@@ -14,10 +14,10 @@ from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGet
                           OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
                           InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer, InUserCommentProducts,
                           OutUserCommentProducts, InUserRateProduct, InUserAddAddress, InUserUpdateAddress,
-                          InUserDeleteAddress, OutUserGetAddress)
+                          InUserDeleteAddress, OutUserGetAddress, InUserDeleteCart)
 
 from .services import (create_user_comment, create_or_update_user_product_rate, create_user_address,
-                       update_user_address, inactive_user_address)
+                       update_user_address, inactive_user_address, delete_user_cart)
 from ..utils.exceptions import TooManyItemsException
 
 from ..utils.paginations import DefaultPagination
@@ -267,3 +267,16 @@ class UserAddItemsToCart(APIView):
             return Response({"error": "Too many items"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class UserDeleteCart(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+    input_serializer_class = InUserDeleteCart
+
+    def post(self, request):
+        input_serializer = self.input_serializer_class(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        try:
+            delete_user_cart(user=request.user, cart_id=input_serializer.validated_data['cart_id'])
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data={"id": input_serializer.validated_data['cart_id']}, status=status.HTTP_200_OK)

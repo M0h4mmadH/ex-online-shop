@@ -233,6 +233,13 @@ class OutUserGetAddress(serializers.ModelSerializer):
         fields = ['id', 'address', 'city']
 
 
+class InUserDeleteCart(serializers.ModelSerializer):
+    cart_id = serializers.IntegerField()
+
+    class Meta:
+        model = Cart
+        fields = ['cart_id']
+
 
 class InUserAddItemsToCart(serializers.Serializer):
     product_id = serializers.IntegerField()

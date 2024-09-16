@@ -69,6 +69,9 @@ class Cart(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True)
