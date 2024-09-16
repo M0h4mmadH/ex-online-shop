@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -76,7 +77,7 @@ class ShopAPITestCase(TestCase):
         self.assertEqual(self.category.name, 'Digital Electronics')
         self.assertFalse(self.category.is_active)
 
-    def test_user_add_items_to_cart(self):
+    def test_user_add_a_item_to_cart(self):
         self.client.force_authenticate(user=self.regular_user)
         url = reverse('user add items to cart')
         data = [
@@ -91,6 +92,64 @@ class ShopAPITestCase(TestCase):
         self.assertEqual(CartItem.objects.count(), 1)
         cart_item = CartItem.objects.first()
         self.assertEqual(cart_item.quantity, 2)
+
+    def test_user_add_more_than_ten_items_to_cart(self):
+        # Create products
+        self.client.force_authenticate(user=self.regular_user)
+        for i in range(0, 10):
+            product = {
+                'name': f"Product {i}",
+                'price': (i + 1) * 100,
+                'category': self.category,
+            }
+            Product.objects.create(**product)
+
+        # Add item to active cart
+        url = reverse('user add items to cart')
+        product_ids = Product.objects.values_list('id', flat=True)
+        self.assertGreater(len(product_ids), 0)
+
+        product_data = []
+        for product_id in product_ids:
+            product_data.append({
+                'product_id': product_id,
+                'quantity': 2
+            })
+        response = self.client.post(url, product_data, format='json')
+
+        # Testing results
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], "Too many items")
+
+    def test_user_add_exactly_ten_items_to_cart(self):
+        # Create products
+        self.client.force_authenticate(user=self.regular_user)
+        for i in range(0, 9):
+            product = {
+                'name': f"Product {i}",
+                'category': self.category,
+                'price': (i + 1) * 100,
+            }
+            Product.objects.create(**product)
+
+        # Add item to active cart
+        url = reverse('user add items to cart')
+        product_ids = Product.objects.values_list('id', flat=True)
+        self.assertGreater(len(product_ids), 0)
+
+        product_data = []
+        for product_id in product_ids:
+            product_data.append({
+                'quantity': 1,
+                'product_id': product_id,
+            })
+        response = self.client.post(url, product_data, format='json')
+
+        # Testing results
+        cart = Cart.objects.get(user=self.regular_user)
+        cart_products_count = cart.cartitem_set.aggregate(Sum('quantity'))['quantity__sum'] or 0
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(cart_products_count, 10)
 
     def test_get_products(self):
         url = reverse('search products')
@@ -351,4 +410,3 @@ class ShopAPITestCase(TestCase):
         self.assertEqual(response['id'], db_active_address.id)
         self.assertEqual(response['address'], db_active_address.address)
         self.assertEqual(response['city']['name'], db_active_address.city.name)
-

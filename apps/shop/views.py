@@ -18,6 +18,7 @@ from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGet
 
 from .services import (create_user_comment, create_or_update_user_product_rate, create_user_address,
                        update_user_address, inactive_user_address)
+from ..utils.exceptions import TooManyItemsException
 
 from ..utils.paginations import DefaultPagination
 
@@ -262,3 +263,7 @@ class UserAddItemsToCart(APIView):
             }, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except TooManyItemsException:
+            return Response({"error": "Too many items"}, status=status.HTTP_400_BAD_REQUEST)
+
+

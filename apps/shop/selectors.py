@@ -1,7 +1,8 @@
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 
 from apps.shop.models import (Product, ProductCategory, Cart, CartItem, PurchaseReceipt)
+from apps.utils.exceptions import TooManyItemsException
 
 
 def search_products(validated_data):
@@ -98,10 +99,17 @@ def add_item_to_cart(cart, product_id, quantity):
 @transaction.atomic
 def process_add_items_to_cart(user, items_data):
     cart = get_or_create_active_cart(user)
+
+    # Check cart size before adding items to cart
+    cart_products_count = cart.cartitem_set.aggregate(Sum('quantity'))['quantity__sum'] or 0
+    if cart_products_count + len(items_data) > 10:
+        raise TooManyItemsException()
+
     cart_items = []
     for item_data in items_data:
         cart_item = add_item_to_cart(cart, item_data['product_id'], item_data['quantity'])
         cart_items.append(cart_item)
+
     return cart, cart_items
 
 

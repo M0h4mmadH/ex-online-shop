@@ -1,0 +1,3 @@
+
+class TooManyItemsException(Exception):
+    pass
