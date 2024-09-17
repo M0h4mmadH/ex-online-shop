@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.db.models import Sum
 from django.test import TestCase
 from django.urls import reverse
@@ -36,7 +38,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Product.objects.count(), 2)
+        self.assertEqual(Product.active.count(), 2)
 
     def test_admin_update_product(self):
         self.client.force_authenticate(user=self.admin_user)
@@ -61,7 +63,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(ProductCategory.objects.count(), 2)
+        self.assertEqual(ProductCategory.active.count(), 2)
 
     def test_admin_update_category(self):
         self.client.force_authenticate(user=self.admin_user)
@@ -88,9 +90,9 @@ class ShopAPITestCase(TestCase):
         ]
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Cart.objects.count(), 1)
-        self.assertEqual(CartItem.objects.count(), 1)
-        cart_item = CartItem.objects.first()
+        self.assertEqual(Cart.active.count(), 1)
+        self.assertEqual(CartItem.active.count(), 1)
+        cart_item = CartItem.active.first()
         self.assertEqual(cart_item.quantity, 2)
 
     def test_user_add_more_than_ten_items_to_cart(self):
@@ -106,7 +108,7 @@ class ShopAPITestCase(TestCase):
 
         # Add item to active cart
         url = reverse('user add items to cart')
-        product_ids = Product.objects.values_list('id', flat=True)
+        product_ids = Product.active.values_list('id', flat=True)
         self.assertGreater(len(product_ids), 0)
 
         product_data = []
@@ -134,7 +136,7 @@ class ShopAPITestCase(TestCase):
 
         # Add item to active cart
         url = reverse('user add items to cart')
-        product_ids = Product.objects.values_list('id', flat=True)
+        product_ids = Product.active.values_list('id', flat=True)
         self.assertGreater(len(product_ids), 0)
 
         product_data = []
@@ -146,7 +148,7 @@ class ShopAPITestCase(TestCase):
         response = self.client.post(url, product_data, format='json')
 
         # Testing results
-        cart = Cart.objects.get(user=self.regular_user)
+        cart = Cart.active.get(user=self.regular_user)
         cart_products_count = cart.cartitem_set.aggregate(Sum('quantity'))['quantity__sum'] or 0
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(cart_products_count, 10)
@@ -187,7 +189,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Comment.objects.filter(comment=comment).count(), 1)
+        self.assertEqual(Comment.active.filter(comment=comment).count(), 1)
 
     def test_user_invalid_comment_product(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -199,7 +201,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(Comment.objects.filter(comment=comment).count(), 0)
+        self.assertEqual(Comment.active.filter(comment=comment).count(), 0)
 
     def test_user_valid_rate_product(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -210,7 +212,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(UserRateProduct.objects.count(), 1)
+        self.assertEqual(UserRateProduct.active.count(), 1)
 
     def test_user_invalid_rate_product(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -221,7 +223,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(UserRateProduct.objects.count(), 0)
+        self.assertEqual(UserRateProduct.active.count(), 0)
 
     def test_user_multiple_rate_product(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -243,8 +245,8 @@ class ShopAPITestCase(TestCase):
             'rate': 4,
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(UserRateProduct.objects.count(), 1)
-        self.assertEqual(UserRateProduct.objects.first().rate, 4)
+        self.assertEqual(UserRateProduct.active.count(), 1)
+        self.assertEqual(UserRateProduct.active.first().rate, 4)
 
     def test_user_create_valid_address(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -256,8 +258,8 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Address.objects.count(), 1)
-        self.assertEqual(Address.objects.first().address, address)
+        self.assertEqual(Address.active.count(), 1)
+        self.assertEqual(Address.active.first().address, address)
 
     def test_user_create_invalid_lengthy_address(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -269,7 +271,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(Address.objects.count(), 0)
+        self.assertEqual(Address.active.count(), 0)
 
     def test_user_address_update_with_valid_address(self):
         url = reverse('user create address')
@@ -290,8 +292,8 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Address.objects.count(), 1)
-        self.assertEqual(Address.objects.first().address, new_address)
+        self.assertEqual(Address.active.count(), 1)
+        self.assertEqual(Address.active.first().address, new_address)
 
     def test_user_address_update_valid_city(self):
         url = reverse('user create address')
@@ -311,8 +313,8 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Address.objects.count(), 1)
-        self.assertEqual(Address.objects.first().city.name, self.city2.name)
+        self.assertEqual(Address.active.count(), 1)
+        self.assertEqual(Address.active.first().city.name, self.city2.name)
 
     def test_user_address_update_with_invalid_lengthy_address(self):
         self.client.force_authenticate(user=self.regular_user)
@@ -371,7 +373,7 @@ class ShopAPITestCase(TestCase):
         }
         response = self.client.post(path=url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Address.objects.filter(is_active=True).count(), 0)
+        self.assertEqual(Address.active.filter(is_active=True).count(), 0)
 
     def test_user_address_get_active_addresses(self):
         # Add two addresses
@@ -432,10 +434,175 @@ class ShopAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Cart.active.count(), 0)
 
-    def test_user_delete_non_exsting_cart(self):
+    def test_user_delete_non_existing_cart(self):
         self.client.force_authenticate(user=self.regular_user)
         url = reverse('user delete cart')
         response = self.client.post(path=url, data={'cart_id': 10}, format='json')
 
         # Validate results
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('apps.shop.services.purchase_gateway')
+    def test_user_create_cart_and_purchase(self, mock_purchase_gateway):
+        mock_purchase_gateway.return_value = 12345
+        self.client.force_authenticate(user=self.regular_user)
+
+        # Create products
+        for i in range(0, 5):
+            product = {
+                'name': f"Product {i}",
+                'category': self.category,
+                'price': (i + 1) * 100,
+                'city': self.city
+            }
+            Product.objects.create(**product)
+
+        # Add item to active cart
+        url = reverse('user add items to cart')
+        product_ids = Product.active.values_list('id', flat=True)
+        product_data = []
+        for product_id in product_ids:
+            product_data.append({
+                'product_id': product_id,
+                'quantity': 1
+            })
+        self.client.post(url, product_data, format='json')
+
+        # Add address for user
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user create address')
+        address = 'somewhere far away'
+        data = {
+            'address': address,
+            'city': self.city.name
+        }
+        self.client.post(path=url, data=data, format='json')
+
+        # Purchase cart
+        cart = Cart.active.first()
+        address = Address.active.first()
+        url = reverse('user purchase cart')
+        data = {
+            'cart_id': cart.id,
+            'address_id': address.id
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        cart.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['tracking_code'], 12345)
+        self.assertEqual(cart.cart_status, 'P')
+
+    def test_user_create_cart_and_purchase_non_existing_cart(self):
+        self.client.force_authenticate(user=self.regular_user)
+        
+        # Add address for user
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user create address')
+        address = 'somewhere far away'
+        data = {
+            'address': address,
+            'city': self.city.name
+        }
+        self.client.post(path=url, data=data, format='json')
+
+        # Purchase non-existing cart
+        url = reverse('user purchase cart')
+        data = {
+            'cart_id': 99,
+            'address_id': Address.active.first().id
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'Cart not found')
+
+    def test_user_create_cart_and_purchase_non_existing_address(self):
+        self.client.force_authenticate(user=self.regular_user)
+        cid = Cart.active.first().id
+
+        # Purchase with non-existing address
+        url = reverse('user purchase cart')
+        data = {
+            'cart_id': cid,
+            'address_id': 23
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'Address not found')
+
+    def test_user_create_cart_and_purchase_empty_cart(self):
+        self.client.force_authenticate(user=self.regular_user)
+        empty_cart = Cart.objects.create(user=self.regular_user)
+
+        # Add address for user
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user create address')
+        address = 'just home'
+        data = {
+            'address': address,
+            'city': self.city.name
+        }
+        self.client.post(path=url, data=data, format='json')
+
+        # Purchase with non-existing address
+        url = reverse('user purchase cart')
+        data = {
+            'cart_id': empty_cart.id,
+            'address_id': Address.active.first().id
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'Cart is empty')
+
+    def test_user_create_cart_and_purchase_invalid_city(self):
+        self.client.force_authenticate(user=self.regular_user)
+
+        # Create products
+        Product.objects.create(**{
+            'category': self.category,
+            'name': f"Product some city",
+            'price':  100,
+            'city': self.city,
+        })
+        mismatch_product = Product.objects.create(**{
+            'category': self.category,
+            'name': f"Product another city",
+            'price': 400,
+            'city': self.city2,
+        })
+
+        mismatch_product_id = mismatch_product.id
+        # Add item to active cart
+        url = reverse('user add items to cart')
+        product_ids = Product.active.values_list('id', flat=True)
+        product_data = []
+        for product_id in product_ids:
+            product_data.append({
+                'product_id': product_id,
+                'quantity': 3
+            })
+        self.client.post(url, product_data, format='json')
+
+        # Add address for user
+        address = 'somewhere far away'
+        self.client.force_authenticate(user=self.regular_user)
+        url = reverse('user create address')
+        data = {
+            'city': self.city.name,
+            'address': address,
+        }
+        self.client.post(path=url, data=data, format='json')
+
+        # Purchase cart
+        url = reverse('user purchase cart')
+        address = Address.active.first()
+        cart = Cart.active.first()
+        data = {
+            'cart_id': cart.id,
+            'address_id': address.id
+        }
+        response = self.client.post(path=url, data=data, format='json')
+        cart.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], f"Product with id {mismatch_product_id} address city mismatch")
+        self.assertEqual(cart.cart_status, 'O')

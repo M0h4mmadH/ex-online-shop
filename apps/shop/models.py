@@ -1,21 +1,23 @@
 from django.db import models
 
 from apps.user.models import User
-
-
-class ActiveManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+from apps.utils.managers import ActiveManager
 
 
 class ProductCategory(models.Model):
     name = models.CharField(max_length=100, unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class City(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False, unique=True)
     is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
+    active = ActiveManager()
 
     def __str__(self):
         return self.name
@@ -31,6 +33,9 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     city = models.ForeignKey(City, on_delete=models.PROTECT, null=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class Order(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
@@ -40,6 +45,9 @@ class Order(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class PurchaseReceipt(models.Model):
     items = models.ManyToManyField(Order, through='ReceiptOrder')
@@ -47,6 +55,10 @@ class PurchaseReceipt(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
+    active = ActiveManager()
 
 
 class ReceiptOrder(models.Model):
@@ -55,6 +67,10 @@ class ReceiptOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
+    active = ActiveManager()
 
 
 class Cart(models.Model):
@@ -79,6 +95,9 @@ class CartItem(models.Model):
     quantity = models.IntegerField(default=1)
     is_active = models.BooleanField(default=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class Address(models.Model):
     city = models.ForeignKey(City, on_delete=models.PROTECT, null=True)
@@ -98,6 +117,9 @@ class Post(models.Model):
     description = models.CharField(max_length=2500, null=False, blank=True)
     is_active = models.BooleanField(default=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
@@ -106,9 +128,15 @@ class Comment(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True)
     is_active = models.BooleanField(default=True)
 
+    objects = models.Manager()
+    active = ActiveManager()
+
 
 class UserRateProduct(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
     product = models.ForeignKey(Product, on_delete=models.PROTECT, null=True)
     rate = models.IntegerField(null=False, blank=False)
     is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
+    active = ActiveManager()

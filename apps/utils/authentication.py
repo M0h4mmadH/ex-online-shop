@@ -11,9 +11,9 @@ class EmailPhoneBackend(ModelBackend):
         user_model = get_user_model()
         try:
             if email is not None:
-                user = user_model.objects.get(email=email)
+                user = user_model.active.get(email=email)
             elif phone_number is not None:
-                user = user_model.objects.get(phone_number=phone_number)
+                user = user_model.active.get(phone_number=phone_number)
         except user_model.DoesNotExist:
             return None
 

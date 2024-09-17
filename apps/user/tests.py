@@ -31,8 +31,8 @@ class UserAPITestCase(TestCase):
         }
         response = self.client.post(self.verify_otp_url, verify_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertEqual(User.objects.get().email, 'mikewazowski@minc.com')
+        self.assertEqual(User.active.count(), 1)
+        self.assertEqual(User.active.get().email, 'mikewazowski@minc.com')
 
     @patch('apps.user.services.generate_otp')
     def test_register_with_phone_number(self, mock_generate_otp):
@@ -52,8 +52,8 @@ class UserAPITestCase(TestCase):
         }
         response = self.client.post(self.verify_otp_url, verify_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertEqual(User.objects.get().phone_number, '09123456789')
+        self.assertEqual(User.active.count(), 1)
+        self.assertEqual(User.active.get().phone_number, '09123456789')
 
     def test_login_with_email(self):
         user = User.objects.create_user(
@@ -115,4 +115,4 @@ class UserAPITestCase(TestCase):
         }
         response = self.client.post(self.verify_otp_url, verify_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(User.objects.count(), 0)
+        self.assertEqual(User.active.count(), 0)

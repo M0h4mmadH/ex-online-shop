@@ -13,7 +13,7 @@ def search_products(validated_data):
     city = validated_data.get('city')
     order_by = validated_data.get('order_by', 'name')
 
-    queryset = Product.objects.filter(is_active=True)
+    queryset = Product.active.filter(is_active=True)
 
     if search:
         queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
@@ -38,7 +38,7 @@ def search_categories(validated_data):
     search = validated_data.get('search', '')
     order_by = validated_data.get('order_by', 'name')
 
-    queryset = ProductCategory.objects.filter(is_active=True)
+    queryset = ProductCategory.active.filter(is_active=True)
 
     if search:
         queryset = queryset.filter(name__icontains=search)
@@ -48,11 +48,11 @@ def search_categories(validated_data):
 
 
 def create_product(validated_data):
-    return Product.objects.create(**validated_data)
+    return Product.active.create(**validated_data)
 
 
 def update_product(validated_data):
-    product = Product.objects.get(id=validated_data['id'])
+    product = Product.active.get(id=validated_data['id'])
     for attr, value in validated_data.items():
         setattr(product, attr, value)
     product.save()
@@ -60,11 +60,11 @@ def update_product(validated_data):
 
 
 def create_category(validated_data):
-    return ProductCategory.objects.create(**validated_data)
+    return ProductCategory.active.create(**validated_data)
 
 
 def update_category(validated_data):
-    category = ProductCategory.objects.get(name=validated_data['current_name'])
+    category = ProductCategory.active.get(name=validated_data['current_name'])
     if 'new_name' in validated_data:
         category.name = validated_data['new_name']
     if 'is_active' in validated_data:
@@ -74,7 +74,7 @@ def update_category(validated_data):
 
 
 def get_or_create_active_cart(user):
-    cart, created = Cart.objects.get_or_create(
+    cart, created = Cart.active.get_or_create(
         user=user,
         cart_status='O',
         is_active=True,
@@ -84,8 +84,8 @@ def get_or_create_active_cart(user):
 
 
 def add_item_to_cart(cart, product_id, quantity):
-    product = Product.objects.get(id=product_id)
-    cart_item, created = CartItem.objects.get_or_create(
+    product = Product.active.get(id=product_id)
+    cart_item, created = CartItem.active.get_or_create(
         cart=cart,
         product=product,
         defaults={'quantity': quantity}
@@ -114,8 +114,8 @@ def process_add_items_to_cart(user, items_data):
 
 
 def get_user_purchase_receipts(user, **filters):
-    return PurchaseReceipt.objects.filter(user=user)
+    return PurchaseReceipt.active.filter(user=user)
 
 
 def get_user_open_carts(user, **filters):
-    return Cart.objects.filter(user=user, cart_status='O')
+    return Cart.active.filter(user=user, cart_status='O')

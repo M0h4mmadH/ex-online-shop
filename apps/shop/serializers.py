@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from apps.shop.models import *
+from apps.shop.services import user_purchase_order
+from apps.utils.exceptions import (TooManyItemsException, UserCartAddressCityDoesNotMatch, EmptyCartException)
 
 
 class InGetProducts(serializers.Serializer):
@@ -94,7 +96,7 @@ class InAdminCreateProducts(serializers.ModelSerializer):
     @classmethod
     def validate_category(cls, value):
         try:
-            return ProductCategory.objects.get(name=value)
+            return ProductCategory.active.get(name=value)
         except ProductCategory.DoesNotExist:
             raise serializers.ValidationError("Invalid category")
 
@@ -124,7 +126,7 @@ class InAdminUpdateProducts(serializers.ModelSerializer):
     @classmethod
     def validate_category(cls, value):
         try:
-            return ProductCategory.objects.get(name=value)
+            return ProductCategory.active.get(name=value)
         except ProductCategory.DoesNotExist:
             raise serializers.ValidationError("Invalid category")
 
@@ -148,7 +150,7 @@ class InAdminUpdateCategory(serializers.ModelSerializer):
 
     @classmethod
     def validate_new_name(cls, value):
-        if ProductCategory.objects.filter(name=value).exists():
+        if ProductCategory.active.filter(name=value).exists():
             raise serializers.ValidationError("Category with this name already exists.")
         return value
 
@@ -259,3 +261,15 @@ class OutCartItem(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['id', 'product_name', 'product_price', 'quantity']
+
+
+class UserPurchaseCartInputSerializer(serializers.Serializer):
+    cart_id = serializers.IntegerField()
+    address_id = serializers.IntegerField()
+
+
+class UserPurchaseCartOutputSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Cart
+        fields = ['id']

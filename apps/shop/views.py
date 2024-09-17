@@ -1,11 +1,11 @@
 from rest_framework import status
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 from .models import (Product, ProductCategory, Address, City, Cart)
+
 from .selectors import (search_products, search_categories, update_product, create_product, update_category,
                         create_category, process_add_items_to_cart, get_user_purchase_receipts, get_user_open_carts)
 
@@ -14,11 +14,13 @@ from .serializers import (OutGetProducts, InGetProducts, InGetCategories, OutGet
                           OutAdminCreateCategory, InAdminCreateCategory, InUserAddItemsToCart, OutUserCart, OutCartItem,
                           InGetUserCarts, OutGetUserCarts, OutPurchaseReceiptSerializer, InUserCommentProducts,
                           OutUserCommentProducts, InUserRateProduct, InUserAddAddress, InUserUpdateAddress,
-                          InUserDeleteAddress, OutUserGetAddress, InUserDeleteCart)
+                          InUserDeleteAddress, OutUserGetAddress, InUserDeleteCart, UserPurchaseCartInputSerializer,
+                          UserPurchaseCartOutputSerializer)
 
 from .services import (create_user_comment, create_or_update_user_product_rate, create_user_address,
-                       update_user_address, inactive_user_address, delete_user_cart)
-from ..utils.exceptions import TooManyItemsException
+                       update_user_address, inactive_user_address, delete_user_cart, user_purchase_order)
+
+from ..utils.exceptions import TooManyItemsException, EmptyCartException, UserCartAddressCityDoesNotMatch
 
 from ..utils.paginations import DefaultPagination
 
@@ -280,3 +282,31 @@ class UserDeleteCart(APIView):
         except Cart.DoesNotExist:
             return Response({"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(data={"id": input_serializer.validated_data['cart_id']}, status=status.HTTP_200_OK)
+
+
+class UserPurchaseCart(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request):
+        input_serializer = UserPurchaseCartInputSerializer(data=request.data, context={'request': request})
+        input_serializer.is_valid(raise_exception=True)
+
+        try:
+            cart, price, tracking_code = user_purchase_order(user=request.user,
+                                                             cart_id=input_serializer.validated_data['cart_id'],
+                                                             address_id=input_serializer.validated_data['address_id'])
+        except Cart.DoesNotExist:
+            return Response(data={"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Address.DoesNotExist:
+            return Response(data={"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        except EmptyCartException:
+            return Response(data={"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+        except UserCartAddressCityDoesNotMatch as e:
+            product_id = e.kwargs['product_id']
+            return Response(data={"error": f"Product with id {product_id} address city mismatch"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        output_serializer = UserPurchaseCartOutputSerializer(cart)
+        extra_args = {'total_price': price, 'tracking_code': tracking_code}
+        return Response(output_serializer.data | extra_args, status=status.HTTP_200_OK)
