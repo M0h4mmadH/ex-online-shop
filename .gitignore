@@ -7,3 +7,6 @@ venv
 
 # PYCACHE
 *__pycache__*
+
+# env file
+/opt/env
