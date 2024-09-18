@@ -9,10 +9,8 @@ This project is a Django-based REST API for an e-commerce platform. It provides 
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Testing](#testing)
-- [Docker](#docker)
-- [Contributing](#contributing)
-- [License](#license)
+- [Testing](#run-test)
+- [Runing server](#run-server)
 
 ## Features
 
