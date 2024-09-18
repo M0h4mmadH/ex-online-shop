@@ -34,8 +34,8 @@ This project is a Django-based REST API for an e-commerce platform. It provides 
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/your-repo-name.git
-   cd your-repo-name
+   git clone https://github.com/M0h4mmadH/ex-online-shop
+   cd ex-online-shop
    ```
 
 2. Create and activate a virtual environment:
@@ -103,3 +103,7 @@ The project use standard django TestCase class. To run tests:
 python manage.py test apps.shop.tests 
 python manage.py test apps.user.tests 
 ```
+## Run server
+Run following command to run the project:
+
+``python manage.py runserver ``
